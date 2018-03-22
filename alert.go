@@ -6,10 +6,12 @@ type Alert interface {
 	Channel() chan<- interface{}
 }
 
+type handler func(interface{})
+
 type baseAlert struct {
-	ch     chan interface{}
-	done   chan int
-	action func(interface{})
+	ch      chan interface{}
+	done    chan int
+	handler handler
 }
 
 func (a *baseAlert) Channel() chan<- interface{} {
@@ -32,9 +34,9 @@ type raiseAlert struct {
 func NewRaiseAlert(threshold, fluctuation float64, action func(interface{})) Alert {
 	a := &raiseAlert{
 		baseAlert: baseAlert{
-			ch:     make(chan interface{}),
-			done:   make(chan int),
-			action: action,
+			ch:      make(chan interface{}),
+			done:    make(chan int),
+			handler: action,
 		},
 		threshold:          threshold,
 		minimumFluctuation: fluctuation,
@@ -74,19 +76,22 @@ func (a *raiseAlert) start() {
 		for !exit {
 			select {
 			case val := <-a.ch:
-				v, ok := val.(Valuer)
-
+				v, ok := val.(float64)
 				if !ok {
-					continue
+					valuer, ok := val.(Valuer)
+					if !ok {
+						continue
+					}
+					v = valuer.Value()
 				}
 
-				if !a.check(v.Value()) {
+				if !a.check(v) {
 					continue
 				}
 				a.alertOn = true
 
-				if a.action != nil {
-					a.action(val)
+				if a.handler != nil {
+					a.handler(val)
 				}
 
 			case <-a.done:

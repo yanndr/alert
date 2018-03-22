@@ -19,11 +19,14 @@ func main() {
 			fmt.Println("Not a temperature")
 			return
 		}
-		fmt.Println("Temperature reached", temp)
+		fmt.Printf("------ Temperature reached %s ------- \n", temp)
 	})
-	m.Subscribe("My channel", a.Channel())
+	m.Subscribe("Raised to 35 alert", a.Channel())
 
-	tt := temperature.NewMonitoredTemperature(temperature.Celsius, m.MonitorChan)
+	tt := temperature.NewMonitoredTemperature(temperature.Celsius, func(t temperature.Temperature) {
+		fmt.Println("new temperature received", t)
+		m.MonitorChan <- t
+	})
 	tt.SetTemperature(temperature.NewCelsius(32))
 
 	tt.SetTemperature(temperature.NewCelsius(35))

@@ -29,7 +29,6 @@ func (m *Monitor) start() {
 			case <-m.done:
 				stop = true
 			}
-
 		}
 	}()
 }
