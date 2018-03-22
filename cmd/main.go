@@ -23,7 +23,7 @@ func main() {
 	})
 	m.Subscribe("Raised to 35 alert", a.Channel())
 
-	tt := temperature.NewMonitoredTemperature(temperature.Celsius, func(t temperature.Temperature) {
+	tt := temperature.NewTemperatureWithHandler(0, temperature.Celsius, func(t temperature.Temperature) {
 		fmt.Println("new temperature received", t)
 		m.MonitorChan <- t
 	})
