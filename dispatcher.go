@@ -2,18 +2,29 @@ package alert
 
 import "sync"
 
+type Subscriber interface {
+	Subscribe(e string, ch chan<- interface{})
+	unsubscribe(e string, ch chan<- interface{})
+}
+
+type Dispatcher interface {
+	Subscriber
+	Emit(interface{})
+	Stop()
+}
+
 type eventDispatcher struct {
 	mutex         sync.RWMutex
 	eventChannels map[string]chan<- interface{}
 }
 
-func newEventDispatcher() *eventDispatcher {
+func newDispatcher() Dispatcher {
 	return &eventDispatcher{
 		eventChannels: make(map[string]chan<- interface{}),
 	}
 }
 
-func (d *eventDispatcher) emit(data interface{}) {
+func (d *eventDispatcher) Emit(data interface{}) {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 
@@ -22,7 +33,7 @@ func (d *eventDispatcher) emit(data interface{}) {
 	}
 }
 
-func (d *eventDispatcher) closeChannels() {
+func (d *eventDispatcher) Stop() {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 

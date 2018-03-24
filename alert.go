@@ -8,22 +8,22 @@ type Alert interface {
 
 type handler func(interface{})
 
-type baseAlert struct {
+type listener struct {
 	ch      chan interface{}
 	done    chan int
 	handler handler
 }
 
-func (a *baseAlert) Channel() chan<- interface{} {
+func (a *listener) Channel() chan<- interface{} {
 	return a.ch
 }
 
-func (a *baseAlert) Stop() {
+func (a *listener) Stop() {
 	a.done <- 1
 }
 
 type raiseAlert struct {
-	baseAlert
+	listener
 	threshold          float64
 	minimumFluctuation float64
 	previousValue      float64
@@ -33,7 +33,7 @@ type raiseAlert struct {
 //NewRaiseAlert returns a alert that trigger when a threshold is reached by raising.
 func NewRaiseAlert(threshold, fluctuation float64, action func(interface{})) Alert {
 	a := &raiseAlert{
-		baseAlert: baseAlert{
+		listener: listener{
 			ch:      make(chan interface{}),
 			done:    make(chan int),
 			handler: action,
